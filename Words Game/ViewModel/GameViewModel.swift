@@ -1,0 +1,90 @@
+import Foundation
+enum WordError: Error {
+    case theSameWord
+    case beforeWord
+    case littleWord
+    case wrongWord
+    case underinedError
+}
+class GameViewModel: ObservableObject {
+    
+    @Published var player1: Player
+    @Published var player2: Player
+    @Published var words = [String]()
+    
+    let word: String
+    var isFirst = true
+    
+    
+    init(player1: Player, player2: Player, word: String) {
+        self.player1 = player1
+        self.player2 = player2
+        self.word = word.uppercased()
+    }
+    
+    func validate(word: String) throws {
+        
+        let word = word.uppercased()
+        guard word != self.word else {
+            print("Do you think you're the smartest?! The compound word must not be original word.")
+            throw WordError.theSameWord
+        }
+        guard !(words.contains(word)) else {
+            print("Show your imagination! Come up with a new word that has not been composed before.")
+            throw WordError.beforeWord
+            
+        }
+        guard word.count > 1 else {
+            print("To short a word.")
+            throw WordError.littleWord
+        }
+        return
+    }
+    
+    func wordToChars(word: String) -> [Character] {
+        var chars = [Character]()
+        for char in word.uppercased() {
+            chars.append(char)
+        }
+        return chars
+    }
+    
+    func check(word: String) throws -> Int {
+        do {
+        try self.validate(word: word)
+        } catch {
+            throw error
+        }
+        var bigWordArray = wordToChars(word: self.word)
+        let smallWordArray = wordToChars(word: word)
+        var result = ""
+        
+        for char in smallWordArray {
+            result.append(char)
+            if bigWordArray.contains(char) {
+                var i = 0
+                while bigWordArray[i] != char {
+                    i += 1
+                }
+                bigWordArray.remove(at: i)
+                
+            } else {
+                throw WordError.wrongWord
+            }
+        }
+        guard result == word.uppercased() else {
+            print("Unknown error")
+            return 0
+        }
+        words.append(result)
+        
+        if isFirst {
+            player1.score += result.count
+        } else {
+            player2.score += result.count
+        }
+        isFirst.toggle()
+        return result.count
+
+    }
+}
